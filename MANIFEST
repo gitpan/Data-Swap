@@ -1,0 +1,7 @@
+MANIFEST
+Makefile.PL
+README
+Swap.xs
+lib/Data/Swap.pm
+t/synopsis.t
+typemap
