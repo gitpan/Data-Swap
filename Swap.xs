@@ -1,8 +1,11 @@
-/* $Id: Swap.xs,v 1.2 2003/06/30 19:34:14 xmath Exp $ */
+/* $Id: Swap.xs,v 1.4 2003/07/03 09:43:44 xmath Exp $ */
 
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+
+#define swap_overload_err \
+	"Can't swap an overloaded object with a non-overloaded one"
 
 typedef SV *SVref;
 
@@ -22,6 +25,8 @@ swap(foo, bar)
     CODE:
 	if (SvREADONLY(foo) || SvREADONLY(bar))
 		croak(PL_no_modify);
+	if ((SvFLAGS(ST(0)) ^ SvFLAGS(ST(1))) & SVf_AMAGIC)
+		croak(swap_overload_err);
 	if (SvMAGICAL(foo) && (mg1 = mg_find(foo, '<')))
 		SvUPGRADE(bar, SVt_PVMG);
 	if (SvMAGICAL(bar) && (mg2 = mg_find(bar, '<')))

@@ -1,0 +1,9 @@
+Revision history for Perl extension Data::Swap
+$Id: Changes,v 1.2 2003/07/03 09:43:44 xmath Exp $
+
+0.02  Thu Jul  3 11:34:51 CEST 2003
+	- added Changes file.
+	- disallow swapping an overloaded object with a non-overloaded one.
+
+0.01  Mon Jun 30 20:08:38 CEST 2003
+	- initial version.

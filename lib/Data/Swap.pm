@@ -1,4 +1,4 @@
-# $Id: Swap.pm,v 1.4 2003/06/30 20:08:38 xmath Exp $
+# $Id: Swap.pm,v 1.5 2003/07/03 09:36:50 xmath Exp $
 
 package Data::Swap;
 
@@ -44,6 +44,8 @@ This module has only one function, which is exported by default:
 Swaps the variable referenced by $ref1 by the one referenced by $ref2.  The 
 two variables may be of different types.
 
+You can't swap an overloaded object with a non-overloaded one.
+
 =back
 
 =head1 KNOWN ISSUES
@@ -74,7 +76,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use base 'Exporter';
 use base 'DynaLoader';

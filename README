@@ -1,4 +1,4 @@
-$Id: README,v 1.3 2003/06/30 20:08:38 xmath Exp $
+$Id: README,v 1.4 2003/07/03 09:36:50 xmath Exp $
 
 INSTALLATION
 
@@ -47,6 +47,8 @@ FUNCTIONS
     swap($ref1, $ref2)
         Swaps the variable referenced by $ref1 by the one referenced by
         $ref2. The two variables may be of different types.
+
+        You can't swap an overloaded object with a non-overloaded one.
 
 KNOWN ISSUES
     Don't change the type of a directly accessible variable.. that is, don't
