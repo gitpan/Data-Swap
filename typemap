@@ -1,8 +1,0 @@
-SVref		T_REF
-
-INPUT
-T_REF
-	if (SvROK($arg))
-		$var = SvRV($arg);
-	else
-		croak(\"$var is not a reference\")

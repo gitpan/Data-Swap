@@ -1,5 +1,15 @@
 Revision history for Perl extension Data::Swap
-$Id: Changes,v 1.2 2003/07/03 09:43:44 xmath Exp $
+$Id: Changes,v 1.4 2004/09/29 14:45:24 xmath Exp $
+
+0.05  Wed Sep 29 15:36:35 CEST 2004
+	- split off Data::Swap from Data::Alias again
+
+0.04  Sun Aug 29 21:01:06 CEST 2004
+	- minor fix because PAUSE complained about missing version in Data::Swap
+
+0.03  Sun Aug 29 00:36:48 CEST 2004
+	- initial version of Data::Alias  (incorporates Data::Swap)
+	- fixed swapping objects with weakrefs
 
 0.02  Thu Jul  3 11:34:51 CEST 2003
 	- added Changes file.
