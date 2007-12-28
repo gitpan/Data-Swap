@@ -19,20 +19,64 @@
 #define packWARN(w) (w)
 #endif
 
+#ifndef PERL_COMBI_VERSION
+#define PERL_COMBI_VERSION (PERL_REVISION * 1000000 + PERL_VERSION * 1000 + \
+				PERL_SUBVERSION)
+#endif
+
+#if (PERL_COMBI_VERSION >= 5009003)
+#define custom_warn_uninit(opdesc) \
+	Perl_warner(aTHX_ packWARN(WARN_UNINITIALIZED), \
+		PL_warn_uninit, "", " in ", opdesc)
+#define BACKREFS_IN_HV 1
+#else
+#define custom_warn_uninit(opdesc) \
+	Perl_warner(aTHX_ packWARN(WARN_UNINITIALIZED), \
+		PL_warn_uninit, " in ", opdesc)
+#define BACKREFS_IN_HV 0
+#endif
+
 #define DA_SWAP_OVERLOAD_ERR \
 	"Can't swap an overloaded object with a non-overloaded one"
 #define DA_DEREF_ERR "Can't deref string (\"%.32s\")"
 
-STATIC MAGIC *mg_extract(SV *sv, int type) {
-	MAGIC **mgp, *mg;
-	for (mgp = &SvMAGIC(sv); (mg = *mgp); mgp = &mg->mg_moremagic) {
-		if (mg->mg_type == type) {
-			*mgp = mg->mg_moremagic;
-			mg->mg_moremagic = NULL;
-			return mg;
+STATIC AV *extract_backrefs(pTHX_ SV *sv) {
+	AV *av = NULL;
+
+#if BACKREFS_IN_HV
+	if (SvTYPE(sv) == SVt_PVHV && SvOOK(sv)) {
+		AV **const avp = Perl_hv_backreferences_p(aTHX_ (HV *) sv);
+		av = *avp;
+		*avp = NULL;
+	}
+#endif
+
+	if (!av && SvRMAGICAL(sv)) {
+		MAGIC *const mg = mg_find(sv, PERL_MAGIC_backref);
+		if (mg) {
+			av = (AV *) mg->mg_obj;
+			mg->mg_obj = NULL;
+			mg->mg_virtual = NULL;
+			sv_unmagic(sv, PERL_MAGIC_backref);
 		}
 	}
-	return NULL;
+
+	return av;
+}
+
+STATIC void install_backrefs(pTHX_ SV *sv, AV *backrefs) {
+	if (!backrefs)
+		return;
+
+#if BACKREFS_IN_HV
+	if (SvTYPE(sv) == SVt_PVHV) {
+		AV **const avp = Perl_hv_backreferences_p(aTHX_ (HV *) sv);
+		*avp = backrefs;
+		return;
+	}
+#endif
+
+	sv_magic(sv, (SV *) backrefs, PERL_MAGIC_backref, NULL, 0);
 }
 
 
@@ -55,8 +99,7 @@ deref(...)
 			if (SvOK(ST(i)))
 				Perl_croak(aTHX_ DA_DEREF_ERR, SvPV(ST(i), z));
 			if (ckWARN(WARN_UNINITIALIZED))
-				Perl_warner(aTHX_ packWARN(WARN_UNINITIALIZED),
-					PL_warn_uninit, " in ", "deref");
+				custom_warn_uninit("deref");
 			continue;
 		}
 		sv = SvRV(ST(i));
@@ -115,34 +158,19 @@ swap(r1, r2)
 	SV *r1
 	SV *r2
     PREINIT:
-	void *any;
-	U32 flags;
-	MAGIC *mg1 = NULL;
-	MAGIC *mg2 = NULL;
+	AV *br1, *br2;
+	SV tmp;
     CODE:
 	if (!SvROK(r1) || !(r1 = SvRV(r1)) || !SvROK(r2) || !(r2 = SvRV(r2)))
 		Perl_croak(aTHX_ "Not a reference");
 	if (SvREADONLY(r1) || SvREADONLY(r2))
 		Perl_croak(aTHX_ PL_no_modify);
-	if ((SvFLAGS(ST(0)) ^ SvFLAGS(ST(1))) & SVf_AMAGIC)
+	if (SvAMAGIC(ST(0)) ^ SvAMAGIC(ST(1)))
 		Perl_croak(aTHX_ DA_SWAP_OVERLOAD_ERR);
-	if (SvMAGICAL(r1))
-		mg1 = mg_extract(r1, PERL_MAGIC_backref);
-	if (SvMAGICAL(r2))
-		mg2 = mg_extract(r2, PERL_MAGIC_backref);
-	any = r1->sv_any;
-	flags = r1->sv_flags;
-	r1->sv_any = r2->sv_any;
-	r1->sv_flags = r2->sv_flags;
-	r2->sv_any = any;
-	r2->sv_flags = flags;
-	if (mg1) {
-		SvUPGRADE(r1, SVt_PVMG);
-		mg1->mg_moremagic = SvMAGIC(r1);
-		SvMAGIC(r1) = mg1;
-	}
-	if (mg2) {
-		SvUPGRADE(r2, SVt_PVMG);
-		mg2->mg_moremagic = SvMAGIC(r2);
-		SvMAGIC(r2) = mg2;
-	}
+	br1 = extract_backrefs(aTHX_ r1);
+	br2 = extract_backrefs(aTHX_ r2);
+	tmp = *r1;
+	*r1 = *r2;
+	*r2 = tmp;
+	install_backrefs(aTHX_ r1, br1);
+	install_backrefs(aTHX_ r2, br2);

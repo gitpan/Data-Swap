@@ -1,6 +1,9 @@
 Revision history for Perl extension Data::Swap
 $Id: Changes,v 1.4 2004/09/29 14:45:24 xmath Exp $
 
+0.06  Fri Dec 28 15:16:04 CET 2007
+	- fixed to support perl 5.10 (patches 22741 and 26530)
+
 0.05  Wed Sep 29 15:36:35 CEST 2004
 	- split off Data::Swap from Data::Alias again
 
