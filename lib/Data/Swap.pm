@@ -56,16 +56,18 @@ dereferenced values.
 
 =head1 KNOWN ISSUES
 
-You can't C<swap> an overloaded object with a non-overloaded one.  Also, don't 
-use C<swap> to change the type of a directly accessible variable -- like 
-C<swap \$x, \@y>.  That's just asking for segfaults.  Unfortunately there is 
-no good way for me to detect and prevent this.
+You can't C<swap> an overloaded object with a non-overloaded one, 
+unless you use Perl 5.10 or later.
+
+Also, don't use C<swap> to change the type of a directly accessible 
+variable -- like C<swap \$x, \@y>.  That's just asking for segfaults.  
+Unfortunately there is no good way for me to detect and prevent this.
 
 =head1 AUTHOR
 
 Matthijs van Duin <xmath@cpan.org>
 
-Copyright (C) 2003, 2004  Matthijs van Duin.  All rights reserved.
+Copyright (C) 2003, 2004, 2007, 2008  Matthijs van Duin.
 This program is free software; you can redistribute it and/or modify 
 it under the same terms as Perl itself.
 
@@ -76,7 +78,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 use base 'Exporter';
 use base 'DynaLoader';

@@ -1,6 +1,6 @@
 $Id: README,v 1.6 2004/09/29 14:45:24 xmath Exp $
 
-Data::Swap 0.06
+Data::Swap 0.07
 
 To install this module type the following:
 
@@ -59,14 +59,16 @@ FUNCTIONS
     copies of the dereferenced values.
 
 KNOWN ISSUES
-    You can't "swap" an overloaded object with a non-overloaded one. Also,
-    don't use "swap" to change the type of a directly accessible variable --
-    like "swap \$x, \@y". That's just asking for segfaults. Unfortunately
-    there is no good way for me to detect and prevent this.
+    You can't "swap" an overloaded object with a non-overloaded one, unless
+    you use Perl 5.10 or later.
+
+    Also, don't use "swap" to change the type of a directly accessible
+    variable -- like "swap \$x, \@y". That's just asking for segfaults.
+    Unfortunately there is no good way for me to detect and prevent this.
 
 AUTHOR
     Matthijs van Duin <xmath@cpan.org>
 
-    Copyright (C) 2003, 2004 Matthijs van Duin. All rights reserved. This
-    program is free software; you can redistribute it and/or modify it under
-    the same terms as Perl itself.
+    Copyright (C) 2003, 2004, 2007, 2008 Matthijs van Duin. This program is
+    free software; you can redistribute it and/or modify it under the same
+    terms as Perl itself.

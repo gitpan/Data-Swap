@@ -19,6 +19,20 @@
 #define packWARN(w) (w)
 #endif
 
+#ifndef SVs_PADSTALE
+#define SVs_PADSTALE 0
+#endif
+#ifndef SVs_PADBUSY
+#define SVs_PADBUSY 0
+#endif
+
+#define CONTAINER_FLAGS ( SVs_TEMP | SVf_BREAK | \
+		SVs_PADBUSY | SVs_PADTMP | SVs_PADMY | SVs_PADSTALE )
+
+#ifdef PERL_OLD_COPY_ON_WRITE
+#error "Data::Swap does not support PERL_OLD_COPY_ON_WRITE"
+#endif
+
 #ifndef PERL_COMBI_VERSION
 #define PERL_COMBI_VERSION (PERL_REVISION * 1000000 + PERL_VERSION * 1000 + \
 				PERL_SUBVERSION)
@@ -36,8 +50,11 @@
 #define BACKREFS_IN_HV 0
 #endif
 
+#if (PERL_COMBI_VERSION < 5009004)
 #define DA_SWAP_OVERLOAD_ERR \
 	"Can't swap an overloaded object with a non-overloaded one"
+#endif
+
 #define DA_DEREF_ERR "Can't deref string (\"%.32s\")"
 
 STATIC AV *extract_backrefs(pTHX_ SV *sv) {
@@ -77,6 +94,32 @@ STATIC void install_backrefs(pTHX_ SV *sv, AV *backrefs) {
 #endif
 
 	sv_magic(sv, (SV *) backrefs, PERL_MAGIC_backref, NULL, 0);
+}
+
+STATIC AV *sv_move(pTHX_ SV *dst, SV *src, AV *br)
+{
+	AV *obr = extract_backrefs(aTHX_ src);
+
+#if (PERL_COMBI_VERSION >= 5009003)
+	dst->sv_u = src->sv_u;
+
+	if (SvTYPE(src) == SVt_IV)
+		SvANY(dst) = (XPVIV *) ((char *) &dst->sv_u.svu_iv
+				- STRUCT_OFFSET(XPVIV, xiv_iv));
+#if (PERL_COMBI_VERSION < 5011000)
+	else if (SvTYPE(src) == SVt_RV)
+		SvANY(dst) = &dst->sv_u.svu_rv;
+#endif
+	else
+#endif
+		SvANY(dst) = SvANY(src);
+
+	SvFLAGS(dst) = (SvFLAGS(dst) & CONTAINER_FLAGS) |
+			(SvFLAGS(src) & ~CONTAINER_FLAGS);
+
+	install_backrefs(aTHX_ dst, br);
+
+	return obr;
 }
 
 
@@ -158,19 +201,19 @@ swap(r1, r2)
 	SV *r1
 	SV *r2
     PREINIT:
-	AV *br1, *br2;
-	SV tmp;
+	AV *br;
+	SV t;
     CODE:
+#ifdef DA_SWAP_OVERLOAD_ERR
+	if (SvAMAGIC(r1) != SvAMAGIC(r2))
+		Perl_croak(aTHX_ DA_SWAP_OVERLOAD_ERR);
+#endif
 	if (!SvROK(r1) || !(r1 = SvRV(r1)) || !SvROK(r2) || !(r2 = SvRV(r2)))
 		Perl_croak(aTHX_ "Not a reference");
-	if (SvREADONLY(r1) || SvREADONLY(r2))
+	if ((SvREADONLY(r1) && SvIMMORTAL(r1))
+			|| (SvREADONLY(r2) && SvIMMORTAL(r2)))
 		Perl_croak(aTHX_ PL_no_modify);
-	if (SvAMAGIC(ST(0)) ^ SvAMAGIC(ST(1)))
-		Perl_croak(aTHX_ DA_SWAP_OVERLOAD_ERR);
-	br1 = extract_backrefs(aTHX_ r1);
-	br2 = extract_backrefs(aTHX_ r2);
-	tmp = *r1;
-	*r1 = *r2;
-	*r2 = tmp;
-	install_backrefs(aTHX_ r1, br1);
-	install_backrefs(aTHX_ r2, br2);
+	br = NULL;
+	br = sv_move(aTHX_ &t, r1, br);
+	br = sv_move(aTHX_ r1, r2, br);
+	br = sv_move(aTHX_ r2, &t, br);

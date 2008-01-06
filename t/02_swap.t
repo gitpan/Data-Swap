@@ -5,11 +5,19 @@ use strict;
 use warnings qw(FATAL all);
 use File::Spec;
 use lib File::Spec->catfile("t", "lib");
-use Test::More tests => 18;
+use Test::More tests => 20;
 
 use Data::Swap;
 
 sub refs { [map "".\$_, @_] }
+
+my $foo = 42;
+my $bar = 666;
+
+swap \$foo, \$bar;
+
+is $foo, 666;
+is $bar, 42;
 
 our $x = [1, 2, 3];
 our $y = {4 => 5};
@@ -25,19 +33,27 @@ like $@, qr/^Not a reference /;
 eval { no warnings; swap undef, $x };
 like $@, qr/^Not a reference /;
 
-eval { no warnings; swap $x, \42 };
+eval { no warnings; swap $x, \undef };
 like $@, qr/^Modification .* attempted /;
 
-eval { no warnings; swap \42, $x };
+eval { no warnings; swap \undef, $x };
 like $@, qr/^Modification .* attempted /;
 
 bless $x, 'Overloaded';
 
 eval { no warnings; swap $x, $y };
-like $@, qr/^Can't swap an overloaded object with a non-overloaded one /;
+if ($^V lt 5.9.5) {
+	like $@, qr/^Can't swap an overloaded object with a non-overloaded one/;
+} else {
+	is_deeply [@$x, %$y], [1 .. 5];
+}
 
 eval { no warnings; swap $y, $x };
-like $@, qr/^Can't swap an overloaded object with a non-overloaded one /;
+if ($^V lt 5.9.5) {
+	like $@, qr/^Can't swap an overloaded object with a non-overloaded one/;
+} else {
+	is_deeply [@$y, %$x], [1 .. 5];
+}
 
 bless $y, 'Overloaded';
 
