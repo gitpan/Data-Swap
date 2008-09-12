@@ -1,6 +1,4 @@
-/* $Id: Swap.xs,v 1.6 2004/09/29 14:45:24 xmath Exp $ */
-
-/* Copyright (C) 2003, 2004  Matthijs van Duin <xmath@cpan.org>
+/* Copyright (C) 2003, 2004, 2007, 2008  Matthijs van Duin <xmath@cpan.org>
  *
  * You may distribute under the same terms as perl itself, which is either 
  * the GNU General Public License or the Artistic License.
@@ -134,8 +132,10 @@ void
 deref(...)
     PREINIT:
 	I32 i, n = 0;
+	I32 sref;
 	SV *sv;
     PPCODE:
+	sref = (GIMME == G_SCALAR) && (PL_op->op_flags & OPf_REF);
 	for (i = 0; i < items; i++) {
 		if (!SvROK(ST(i))) {
 			STRLEN z;
@@ -143,9 +143,16 @@ deref(...)
 				Perl_croak(aTHX_ DA_DEREF_ERR, SvPV(ST(i), z));
 			if (ckWARN(WARN_UNINITIALIZED))
 				custom_warn_uninit("deref");
+			if (sref)
+				return;
 			continue;
 		}
 		sv = SvRV(ST(i));
+		if (sref) {
+			PUSHs(sv);
+			PUTBACK;
+			return;
+		}
 		switch (SvTYPE(sv)) {
 			I32 x;
 		case SVt_PVAV:

@@ -1,11 +1,10 @@
 #!/usr/bin/perl -w
-# $Id: 01_deref.t,v 1.1 2004/09/29 14:45:24 xmath Exp $
 
 use strict;
 use warnings qw(FATAL all);
 use File::Spec;
 use lib File::Spec->catfile("t", "lib");
-use Test::More tests => 12;
+use Test::More tests => 13;
 
 use Data::Swap 'deref';
 
@@ -55,5 +54,11 @@ SKIP: {
 
 eval { no warnings; deref *STDOUT{IO} };
 like $@, qr/^Can't deref filehandle reference /;
+
+use Tie::Array;
+
+tie my @ta, 'Tie::StdArray';
+my $tref = \@ta;
+like tied(deref $tref), qr/^Tie::StdArray=ARRAY\(0x[0-9A-Fa-f]+\)\z/;
 
 # vim: ft=perl

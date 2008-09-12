@@ -1,5 +1,4 @@
 #!/usr/bin/perl -w
-# $Id: 02_swap.t,v 1.1 2004/09/29 14:45:24 xmath Exp $
 
 use strict;
 use warnings qw(FATAL all);

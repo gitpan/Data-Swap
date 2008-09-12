@@ -1,5 +1,3 @@
-# $Id: Swap.pm,v 1.7 2004/09/29 14:45:24 xmath Exp $
-
 package Data::Swap;
 
 =head1 NAME
@@ -78,7 +76,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 use base 'Exporter';
 use base 'DynaLoader';

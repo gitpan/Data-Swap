@@ -1,5 +1,8 @@
 Revision history for Perl extension Data::Swap
-$Id: Changes,v 1.4 2004/09/29 14:45:24 xmath Exp $
+
+0.08  Fri Sep 12 15:40 CEST 2008
+	- support deref of aggregates in "refgen context", so you can
+	  do things like  tied deref($anyref)
 
 0.07  Sun Jan  6 15:26 CET 2008
 	- fixed the horrible breakage introduced by 0.06
